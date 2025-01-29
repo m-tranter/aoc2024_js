@@ -103,7 +103,7 @@
           };
         },
         methods: {
-          testDiff: function (arr) {
+          testDiffPart1: function (arr) {
             // Return early if the first pair don't meet conditions
             let d = arr[1] - arr[0];
             let absD = Math.abs(d);
@@ -120,11 +120,32 @@
             }
             return 1;
           },
+          testDiff: function (arr, dampner = true) {
+            let d = arr[1] - arr[0];
+            const test = d < 0 ? (n) => n > -4 && n < 0 : (n) => n > 0 && n < 4;
+            // Loop over remaining elems
+            // Skip first as already checked first pair
+            for (let i = 0; i < arr.length - 1; i++) {
+              let safety = test(arr[i + 1] - arr[i]);
+              if (dampner && !safety) {
+                // Remove the elem that caused failure
+                arr.splice(i + 1, 1);
+                return this.testDiff(arr, false);
+              } else if (!safety) {
+                return 0;
+              }
+            }
+            return 1;
+          },
           process: function () {
             this.result = 0;
-            this.lines.forEach((e) => {
+            this.lines.forEach((e, i) => {
               let match = e.match(this.rx);
-              this.result += this.testDiff(match.map((e) => parseInt(e)));
+              let safe = this.testDiff(match.map((e) => parseInt(e)));
+              if (safe) {
+                this.lines[i] += ' safe';
+              }
+              this.result += safe;
             });
           },
           copyRes: function () {

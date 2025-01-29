@@ -52,16 +52,16 @@
             </div>
           </div>
           <div class="row gy-3 gx-4">
-            <div class="col-lg-6">
+            <div class="col-md-6">
               <textarea
                 class="rounded display p-2 wheat mt-2 border border-dark"
-                cols="26"
+                cols="50"
                 rows="15"
                 v-model="input"
                 @input="reset"
               ></textarea>
             </div>
-            <div class="col-lg-6">
+            <div class="col-md-6">
               <button
                 :disabled="!input.length"
                 @click="process"
@@ -95,23 +95,23 @@
       const myResult = {
         props: ['copyres', 'flash', 'indicator', 'label', 'state'],
         template: `
-                <div>
-                  <label class="d-block mt-3" :for="state">{{label}}</label>
-                  <input
-                    :class="{'bg-success text-white': flash}"
-                    :id="state"
-                    class="rounded  border border-dark p-2"
-                    disabled
-                    v-model="state"
-                  />
-                  <button
-                    @click="copyres(state, indicator)"
-                    class="mt-2 ms-2"
-                    type="button"
-                  >
-                    <i class="fa fa-copy"></i></button
-                  >
-                </div>`,
+          <div>
+            <label class="d-block mt-3" :for="state">{{label}}</label>
+            <input
+              :class="{'bg-success text-white': flash}"
+              :id="state"
+              class="rounded  border border-dark p-2"
+              disabled
+              v-model="state"
+            />
+            <button
+              @click="copyres(state, indicator)"
+              class="mt-2 ms-2"
+              type="button"
+            >
+              <i class="fa fa-copy"></i></button
+            >
+          </div>`,
       };
       const { createApp, defineModel, ref } = Vue;
       const app = createApp({
@@ -122,8 +122,6 @@
           return {
             indicate1: false,
             indicate2: false,
-            left: [],
-            right: [],
             lines: [],
             input: '',
             msg: '&nbsp;',
@@ -143,54 +141,28 @@
             this.partTwo();
           },
           partOne: function () {
-            this.left = [];
-            this.right = [];
-            this.counters = {};
-            this.lines.forEach((line) => {
+            // As a test - sum of all numbers found
+            this.part1 = this.lines.reduce((accOuter, line) => {
               let match = line.match(this.numsRx);
-              if (match) {
-                this.left.push(parseInt(match[0]));
-                this.right.push(parseInt(match[1]));
-              }
-            });
-            this.left.sort();
-            this.right.sort();
-            // Use reduce to calculate the result
-            this.part1 = this.left.reduce((acc, num, i) => {
-              return acc + Math.abs(num - this.right[i]);
+              return !match
+                ? accOuter
+                : accOuter +
+                    match.reduce((accInner, num) => {
+                      return accInner + parseInt(num);
+                    }, 0);
             }, 0);
           },
           partTwo: function () {
-            this.left = [];
-            this.right = [];
-            this.counters = {};
-            this.lines.forEach((line) => {
+            // As a test - product of all numbers found
+            this.part2 = this.lines.reduce((accOuter, line) => {
               let match = line.match(this.numsRx);
-              if (match) {
-                this.left.push(parseInt(match[0]));
-                this.right.push(parseInt(match[1]));
-              }
-            });
-            // Populate the counters object
-            this.left.forEach((e) => {
-              // Increment the left count if there is an element already
-              if (this.counters[e]) {
-                this.counters[e][0] += 1;
-              } else {
-                // Create an element
-                this.counters[e] = [1, 0];
-              }
-            });
-            this.right.forEach((e) => {
-              // Increment the right count if element exists
-              if (this.counters[e]) {
-                this.counters[e][1] += 1;
-              }
-            });
-            // Use reduce to calculate the result
-            this.part2 = Object.keys(this.counters).reduce((acc, e) => {
-              return acc + e * this.counters[e][0] * this.counters[e][1];
-            }, 0);
+              return !match
+                ? accOuter
+                : accOuter *
+                    match.reduce((accInner, num) => {
+                      return accInner * parseInt(num);
+                    }, 1);
+            }, 1);
           },
           copyres: function (id, indicator) {
             navigator.clipboard.writeText(this[id]);
