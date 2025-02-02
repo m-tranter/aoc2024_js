@@ -52,7 +52,7 @@
             </div>
           </div>
           <div class="row gy-3 gx-4">
-            <div class="col-md-6">
+            <div class="col-lg-6">
               <textarea
                 class="rounded display p-2 wheat mt-2 border border-dark"
                 cols="50"
@@ -61,7 +61,7 @@
                 @input="reset"
               ></textarea>
             </div>
-            <div class="col-md-6">
+            <div class="col-lg -6">
               <button
                 :disabled="!input.length"
                 @click="process"
@@ -84,6 +84,7 @@
                 indicator="indicate2"
                 label="Part two"
               ></my-result>
+              <my-list :list="fruits" shade="red"></my-list>
             </div>
           </div>
         </div>
@@ -92,6 +93,17 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
+      const myList = {
+        props: ['list', 'shade'],
+        template: `
+          <div class="mt-3">
+            <h2>{{list.title}}</h2>
+            <ul>
+              <li v-for="item in list.items"><span :style="{color: shade}">{{item}}</span></li>
+            </ul>
+          </div>
+      `,
+      };
       const myResult = {
         props: ['copyres', 'flash', 'indicator', 'label', 'state'],
         template: `
@@ -117,6 +129,7 @@
       const app = createApp({
         components: {
           myResult,
+          myList,
         },
         data() {
           return {
@@ -124,6 +137,10 @@
             indicate2: false,
             lines: [],
             input: '',
+            fruits: {
+              title: 'Fruits',
+              items: ['apple', 'pear', 'orange', 'peach'],
+            },
             msg: '&nbsp;',
             part1: 0,
             part2: 0,

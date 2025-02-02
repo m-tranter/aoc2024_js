@@ -28,12 +28,13 @@
       }
       .display {
         overflow: scroll;
-        height: 20rem;
-        min-width: 300px;
       }
       input {
         field-sizing: content;
         color: Black;
+      }
+      textarea {
+        resize: none;
       }
     </style>
   </head>
@@ -51,37 +52,39 @@
             </div>
           </div>
           <div class="row gy-3 gx-4">
-            <div class="col-md-6">
-              <div class="rounded display p-2 wheat mt-2 border border-dark">
-                <p class="mb-0" v-for="line in lines">{{line}}</p>
-              </div>
+            <div class="col-lg-6">
+              <textarea
+                class="rounded display p-2 wheat mt-2 border border-dark"
+                cols="25"
+                rows="15"
+                v-model="input"
+              ></textarea>
             </div>
-            <div class="col-md-6">
+            <div class="col-lg-6">
               <button
-                class="d-block btn btn-primary my-2"
-                :disabled="!lines.length"
-                type="button"
+                :disabled="!input.length"
                 @click="process"
+                class="d-block btn btn-primary my-2"
+                type="button"
               >
                 Process
               </button>
-              <label for="res">Result:</label>
-              <input
-                id="input"
-                class="rounded d-block border border-dark p-2"
-                disabled
-                v-model="result"
-                :class="{'bg-success text-white': indicate}"
-              />
-              <button
-                title="copy value"
-                type="button"
-                class="mt-2"
-                id="copy"
-                @click="copyRes"
-              >
-                <i class="fa fa-copy"></i>
-              </button>
+              <my-result
+                :copyres="copyres"
+                :flash="indicate1"
+                :state="part1"
+                indicator="indicate1"
+                label="Part one"
+                :time="time1"
+              ></my-result>
+              <my-result
+                :copyres="copyres"
+                :flash="indicate2"
+                :state="part2"
+                indicator="indicate2"
+                label="Part two"
+                :time="time2"
+              ></my-result>
             </div>
           </div>
         </div>
@@ -90,68 +93,155 @@
 
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
-      'use strict';
-      const { createApp } = Vue;
+      const myResult = {
+        props: ['copyres', 'flash', 'indicator', 'label', 'state', 'time'],
+        template: `
+                      <div>
+                        <label class="d-block mt-3" :for="state">{{label}}</label>
+                        <input
+                          :class="{'bg-success text-white': flash}"
+                          :id="state"
+                          class="rounded  border border-dark p-2"
+                          disabled
+                          v-model="state"
+                        />
+                        <button
+                          @click="copyres(state, indicator)"
+                          class="mt-2 ms-2"
+                          type="button"
+                        >
+                          <i class="fa fa-copy"></i></button
+                        >
+                        <p class="mt-2">
+                          <span v-if="time">Time: {{time}}ms</span><span v-else>&nbsp;</span>
+                        </p>
+                      </div>`,
+      };
+      const { createApp, defineModel, ref } = Vue;
       const app = createApp({
+        components: {
+          myResult,
+        },
         data() {
           return {
-            indicate: false,
-            msg: '&nbsp;',
+            indicate1: false,
+            indicate2: false,
             lines: [],
-            rx: /(\d+)/g,
-            result: 0,
+            input: '',
+            msg: '&nbsp;',
+            part1: 0,
+            part2: 0,
+            time1: 0,
+            time2: 0,
+            numsRx: /(\d+)/g,
           };
         },
         methods: {
-          testDiffPart1: function (arr) {
-            // Return early if the first pair don't meet conditions
-            let d = arr[1] - arr[0];
-            let absD = Math.abs(d);
-            if (absD < 1 || absD > 3) {
+          down: (n) => {
+            return n < 0 && n > -4;
+          },
+          up: (n) => {
+            return n > 0 && n < 4;
+          },
+          testDiff1: function (arr) {
+            let d = arr[1] - arr[0] < 0 ? -1 : 1;
+            // loop over and return as soon as one fails
+            for (let i = 0; i < arr.length - 1; i++) {
+              if (!this.up((arr[i + 1] - arr[i]) * d)) {
+                return 0;
+              }
+            }
+            return 1;
+          },
+          testDiff2: function (arr, damp = false) {
+            console.log(arr);
+            //  Get all the diffs
+            let diff = { raw: [], neg: [], pos: [], fail: [] };
+            for (let i = 0; i < arr.length - 1; i++) {
+              let d = arr[i + 1] - arr[i];
+              diff.raw.push(d);
+              if (d < 0) {
+                diff.neg.push(i + 1);
+              } else if (d > 0) {
+                diff.pos.push(i + 1);
+              }
+              let abs = Math.abs(d);
+              if (abs < 1 || abs > 4) {
+                diff.fail.push(arr[i + 1]);
+              }
+            }
+            // Success
+            if (
+              diff.every((e) => this.up(e)) ||
+              this.every((e) => this.down(e))
+            ) {
+              return 1;
+            }
+            // Failure
+            if (!damp) {
               return 0;
             }
-            // Set test to the correct function for up or down
-            const test = d < 0 ? (n) => n > -4 && n < 0 : (n) => n > 0 && n < 4;
-            // Loop over and return as soon as one fails
-            for (let i = 1; i < arr.length - 1; i++) {
-              if (!test(arr[i + 1] - arr[i])) {
-                return 0;
-              }
+            // Dampner
+            console.log(diff);
+            // First difference is off
+            if (
+              diff.fail.includes(1) ||
+              (diff.neg.includes(1) && diff.pos.length) ||
+              (diff.pos.includes(1) && diff.neg.length)
+            ) {
+              return (
+                this.testDiff2(arr.slice(1)) ||
+                this.testDiff2(arr.filter((_, i) => i !== 1))
+              );
+            } else if (diff.neg.length && diff.pos.length) {
+              return this.testDiff2(
+                arr.filter((_, i) => i !== Math.min(diff.neg[0], diff.pos[0]))
+              );
+            } else if (diff.fail.length) {
+              return this.testDiff2(arr.filter((_, i) => i !== diff.fail[0]));
+            } else {
+              console.log(diff);
             }
-            return 1;
           },
-          testDiff: function (arr, dampner = true) {
-            let d = arr[1] - arr[0];
-            const test = d < 0 ? (n) => n > -4 && n < 0 : (n) => n > 0 && n < 4;
-            // Loop over remaining elems
-            // Skip first as already checked first pair
-            for (let i = 0; i < arr.length - 1; i++) {
-              let safety = test(arr[i + 1] - arr[i]);
-              if (dampner && !safety) {
-                // Remove the elem that caused failure
-                arr.splice(i + 1, 1);
-                return this.testDiff(arr, false);
-              } else if (!safety) {
-                return 0;
-              }
-            }
-            return 1;
+          reset: function () {
+            this.part1 = 0;
+            this.part2 = 0;
           },
           process: function () {
-            this.result = 0;
-            this.lines.forEach((e, i) => {
-              let match = e.match(this.rx);
-              let safe = this.testDiff(match.map((e) => parseInt(e)));
-              if (safe) {
-                this.lines[i] += ' safe';
-              }
-              this.result += safe;
-            });
+            this.lines = this.input.split(/\n/g);
+            this.partOne();
+            //this.partTwo();
           },
-          copyRes: function () {
-            navigator.clipboard.writeText(this.result);
-            this.indicate = true;
-            setTimeout(() => (this.indicate = false), 500);
+          partOne: function () {
+            const start = performance.now();
+            this.part1 = this.lines.reduce((acc, line) => {
+              let match = line.match(this.numsRx);
+              return !match
+                ? acc
+                : acc + this.testDiff1(match.map((e) => parseInt(e)));
+            }, 0);
+            const end = performance.now();
+            this.time1 = end - start;
+          },
+          partTwo: function () {
+            const start = performance.now();
+            this.part2 = this.lines.reduce((acc, line) => {
+              let match = line.match(this.numsRx);
+              return !match
+                ? acc
+                : acc +
+                    this.testDiff2(
+                      match.map((e) => parseInt(e)),
+                      true
+                    );
+            }, 0);
+            const end = performance.now();
+            this.time2 = end - start;
+          },
+          copyres: function (id, indicator) {
+            navigator.clipboard.writeText(this[id]);
+            this[indicator] = true;
+            setTimeout(() => (this[indicator] = false), 500);
           },
           readFile: function (e) {
             let file = e.target.files[0];
@@ -161,7 +251,8 @@
             this.msg = f.name;
             const reader = new FileReader();
             reader.onload = () => {
-              this.lines = reader.result.split('\n').filter((e) => e.length);
+              this.reset();
+              this.input = reader.result;
             };
             reader.readAsText(f);
           },
