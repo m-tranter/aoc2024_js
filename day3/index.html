@@ -58,6 +58,7 @@
                 cols="30"
                 rows="10"
                 v-model="input"
+                @focus="reset"
               ></textarea>
             </div>
             <div class="col-lg-6">
@@ -123,7 +124,7 @@
               <i class="fa fa-copy"></i></button
             >
             <p class="mt-2">
-              <span v-if="time">Time: {{time}}ms</span><span v-else>&nbsp;</span>
+              <span v-if="time !== null">Time: {{time}}ms</span><span v-else>&nbsp;</span>
             </p>
           </div>`,
       };
@@ -140,14 +141,17 @@
             msg: '&nbsp;',
             part1: 0,
             part2: 0,
-            time1: 0,
-            time2: 0,
+            time1: null,
+            time2: null,
+            dontRx: /don't\(\).*?do\(\)/gis,
             mulRx: /mul\(\d+,\d+\)/gi,
             numRx: /(\d+),(\d+)/,
           };
         },
         methods: {
           reset: function () {
+            this.time1 = null;
+            this.time2 = null;
             this.part1 = 0;
             this.part2 = 0;
           },
@@ -173,13 +177,7 @@
               : 0;
           },
           partTwo: function (str) {
-            return this.partOne(
-              str
-                .split(/do\(\)/)
-                .map((e) => e.split(/don't\(\)/)[0])
-                .flat()
-                .join('')
-            );
+            return this.partOne(str.replace(this.dontRx, ''));
           },
           copyres: function (id, indicator) {
             navigator.clipboard.writeText(this[id]);
