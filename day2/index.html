@@ -96,26 +96,26 @@
       const myResult = {
         props: ['copyres', 'flash', 'indicator', 'label', 'state', 'time'],
         template: `
-                            <div>
-                              <label class="d-block mt-3" :for="state">{{label}}</label>
-                              <input
-                                :class="{'bg-success text-white': flash}"
-                                :id="state"
-                                class="rounded  border border-dark p-2"
-                                disabled
-                                v-model="state"
-                              />
-                              <button
-                                @click="copyres(state, indicator)"
-                                class="mt-2 ms-2"
-                                type="button"
-                              >
-                                <i class="fa fa-copy"></i></button
-                              >
-                              <p class="mt-2">
-                                <span v-if="time">Time: {{time}}ms</span><span v-else>&nbsp;</span>
-                              </p>
-                            </div>`,
+          <div>
+            <label class="d-block mt-3" :for="state">{{label}}</label>
+            <input
+              :class="{'bg-success text-white': flash}"
+              :id="state"
+              class="rounded  border border-dark p-2"
+              disabled
+              v-model="state"
+            />
+            <button
+              @click="copyres(state, indicator)"
+              class="mt-2 ms-2"
+              type="button"
+            >
+              <i class="fa fa-copy"></i></button
+            >
+            <p class="mt-2">
+              <span v-if="time">Time: {{time}}ms</span><span v-else>&nbsp;</span>
+            </p>
+          </div>`,
       };
       const { createApp, defineModel, ref } = Vue;
       const app = createApp({
@@ -175,24 +175,28 @@
             this.part2 = 0;
           },
           process: function () {
+            let toDo = [
+              { fn: this.partOne, timer: 'time1', result: 'part1' },
+              { fn: this.partTwo, timer: 'time2', result: 'part2' },
+            ];
             this.lines = this.input.split(/\n/g);
-            this.partOne();
-            this.partTwo();
+            toDo.forEach((e) => {
+              let start = performance.now();
+              this[e.result] = e.fn(this.lines);
+              let end = performance.now();
+              this[e.timer] = end - start;
+            });
           },
-          partOne: function () {
-            const start = performance.now();
-            this.part1 = this.lines.reduce((acc, line) => {
+          partOne: function (arr) {
+            return arr.reduce((acc, line) => {
               let match = line.match(this.numsRx);
               return !match
                 ? acc
                 : acc + this.testDiff1(match.map((e) => parseInt(e)));
             }, 0);
-            const end = performance.now();
-            this.time1 = end - start;
           },
-          partTwo: function () {
-            const start = performance.now();
-            this.part2 = this.lines.reduce((acc, line) => {
+          partTwo: function (arr) {
+            return arr.reduce((acc, line) => {
               let match = line.match(this.numsRx);
               return !match
                 ? acc
@@ -202,8 +206,6 @@
                       true
                     );
             }, 0);
-            const end = performance.now();
-            this.time2 = end - start;
           },
           copyres: function (id, indicator) {
             navigator.clipboard.writeText(this[id]);

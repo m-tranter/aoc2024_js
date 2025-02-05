@@ -139,14 +139,14 @@
           },
           process: function () {
             this.lines = this.input.split(/\n/g);
-            this.partOne();
-            this.partTwo();
+            this.part1 = this.partOne(this.lines);
+            this.part2 = this.partTwo(this.lines);
           },
-          partOne: function () {
+          partOne: function (arr) {
             this.left = [];
             this.right = [];
             this.counters = {};
-            this.lines.forEach((line) => {
+            arr.forEach((line) => {
               let match = line.match(this.numsRx);
               if (match) {
                 this.left.push(parseInt(match[0]));
@@ -156,15 +156,15 @@
             this.left.sort();
             this.right.sort();
             // Use reduce to calculate the result
-            this.part1 = this.left.reduce((acc, num, i) => {
+            return this.left.reduce((acc, num, i) => {
               return acc + Math.abs(num - this.right[i]);
             }, 0);
           },
-          partTwo: function () {
+          partTwo: function (arr) {
             this.left = [];
             this.right = [];
             this.counters = {};
-            this.lines.forEach((line) => {
+            arr.forEach((line) => {
               let match = line.match(this.numsRx);
               if (match) {
                 this.left.push(parseInt(match[0]));
@@ -188,7 +188,7 @@
               }
             });
             // Use reduce to calculate the result
-            this.part2 = Object.keys(this.counters).reduce((acc, e) => {
+            return Object.keys(this.counters).reduce((acc, e) => {
               return acc + e * this.counters[e][0] * this.counters[e][1];
             }, 0);
           },

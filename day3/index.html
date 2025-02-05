@@ -152,14 +152,16 @@
             this.part2 = 0;
           },
           process: function () {
-            let start = performance.now();
-            this.part1 = this.partOne(this.input);
-            let end = performance.now();
-            this.time1 = end - start;
-            start = performance.now();
-            this.part2 = this.partTwo(this.input);
-            end = performance.now();
-            this.time2 = end - start;
+            let toDo = [
+              { fn: this.partOne, timer: 'time1', result: 'part1' },
+              { fn: this.partTwo, timer: 'time2', result: 'part2' },
+            ];
+            toDo.forEach((e) => {
+              let start = performance.now();
+              this[e.result] = e.fn(this.input);
+              let end = performance.now();
+              this[e.timer] = end - start;
+            });
           },
           partOne: function (str) {
             let match = str.match(this.mulRx);
