@@ -144,11 +144,6 @@
           getDir: (arr) => {
             return arr[1] - arr[0] < 0 ? -1 : 1;
           },
-          getDiffs: (arr) => {
-            return arr.slice(0, arr.length - 1).reduce((acc, e, i) => {
-              return [...acc, arr[i + 1] - e];
-            }, []);
-          },
           testDiff1: function (arr) {
             let d = this.getDir(arr);
             // loop over and return as soon as one fails
